@@ -3,18 +3,20 @@ version: "3.3"
 services:
 
   synapse:
+    container_name: synapse
     restart: always      
     image: matrix
     volumes:
-      - synapse:/data
+      - ./synapse:/data
     environment:
-      - SYNAPSE_SERVER_NAME=bluesky.net
+      - SYNAPSE_SERVER_NAME=matrix.blueskycommunity.net
       - SYNAPSE_REPORT_STATS=no
       - SYNAPSE_ENABLE_REGISTRATION=yes
       - SYNAPSE_LOG_LEVEL=INFO
       - SYNAPSE_NO_TLS=1
 
   element:
+    container_name: element
     image: vectorim/element-web
     restart: unless-stopped
     depends_on:
