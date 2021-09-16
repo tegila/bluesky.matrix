@@ -1,0 +1,59 @@
+version: "3.3"
+
+services:
+
+  traefik:
+    image: "traefik:v2.4.7"
+    container_name: "traefik"
+    restart: unless-stopped
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=user@matrix.blueskycommunity.net"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
+      - "--accesslog.format=json"
+      - "--accesslog.fields.defaultmode=keep"
+      - "--accesslog.fields.names.ClientUsername=keep"
+      - "--accesslog.fields.headers.defaultmode=keep"
+      - "--accesslog.fields.headers.names.User-Agent=keep"
+      - "--accesslog.fields.headers.names.Authorization=keep"
+      - "--accesslog.fields.headers.names.Content-Type=keep"
+      - "traefik.frontend.headers.SSLRedirect=true"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  nginx:
+    image: nginx:alpine
+    container_name: "nginx"
+    restart: unless-stopped
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+#      - ./htpasswd:/etc/nginx/.htpasswd
+#      - ./nginx-cache:/data/nginx/cache
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nginx.rule=Host(`matrix.blueskycommunity.net`)"
+      - "traefik.http.routers.nginx.entrypoints=websecure"
+      - "traefik.http.routers.nginx.tls.certresolver=myresolver"
+      - "traefik.docker.network=web"
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.frontend.headers.SSLRedirect=true"
+
+networks:
+  default:
+    external: 
+      name: bluesky

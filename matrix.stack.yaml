@@ -1,0 +1,29 @@
+version: "3.3"
+
+services:
+
+  synapse:
+    restart: always      
+    image: matrix
+    volumes:
+      - synapse:/data
+    environment:
+      - SYNAPSE_SERVER_NAME=bluesky.net
+      - SYNAPSE_REPORT_STATS=no
+      - SYNAPSE_ENABLE_REGISTRATION=yes
+      - SYNAPSE_LOG_LEVEL=INFO
+      - SYNAPSE_NO_TLS=1
+
+  element:
+    image: vectorim/element-web
+    restart: unless-stopped
+    depends_on:
+      - synapse
+
+volumes:
+  synapse:
+
+networks:
+  default:
+    external: 
+      name: bluesky
